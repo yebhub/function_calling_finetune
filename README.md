@@ -106,7 +106,7 @@
      else:
        print(f"Failed to create Gist. Status code: {response.status_code}, Message: {response.text}")
      ```
-## IV Fine-tune
+## IV. Fine-tune
 
 - With our dataset saved on CSV file hosted on a public Gist, we can move on to fine-tuning.
 - Set Scale API Key (instructions [here](https://github.com/scaleapi/llm-engine#-quick-start))
@@ -132,7 +132,7 @@
   run_id = response.id
   ```
 
-## V inference and evaluation
+## V. inference and evaluation
  - With fine-tuning complete, we can begin generating responses from our enhanced model.  
 
  - First, make sure model exists...
