@@ -132,9 +132,56 @@
   run_id = response.id
   ```
 
-  ## V inference and evaluation
+## V inference and evaluation
+ - With fine-tuning complete, we can begin generating responses from our enhanced model.  
 
-  - make sure model exists
+ - First, make sure model exists...
     ```python
     ft_model = FineTune.get(run_id).fine_tuned_model
     ```
+ - And verify that it is generating responses as expected. In the example below, we are feeding our fine-tuned model a prompt to see a sample response.
+    ```python
+       prompt_string = """ [INST] <<SYS>> <<API>> You may answer by calling one of the following functions. If you can infer a function's required arguments, respond with a the function name and arguments. If multiple functions can be called, pick the one that best answers the question. ``` {"functions":[{"name":"recommend_points","description":"Look for the points which are closer to stored positive examples and at the same time further to negative examples.","parameters":{"properties":{"collection_name":{"description":"Name of the collection to search in","type":"string"},"consistency":{"description":"Define read consistency guarantees for the operation","type":null}},"required":"collection_name","type":"object"}},{"name":"draft_press_release","description":"Creates a draft press release with the given title, content, date, and media contacts.","parameters":[{"description":"The title of the press release","name":"title","required":true,"type":"string"},{"description":"The content of the press release","name":"content","required":true,"type":"string"},{"description":"The date of the press release","format":"date","name":"date","type":"string"},{"description":"An array of media contact email addresses for distributing the press release","items":{"description":"A single media contact email address","type":"string"},"name":"mediaContacts","type":"array"}]}]} ``` <</API>> <</SYS>> Hey, could you assist us in finding any points that are similar to our positive examples but also far from the negative ones within the "location_history" collection? We will be using eventual read consistency. [/INST ""
+    
+      response = Completion.create(
+          model=ft_model,
+          prompt=prompt_string,
+          max_new_tokens=100,
+          temperature=0.2,
+      )
+      
+      print(response.output.text)
+    ```
+- Then we get the following JSON Object as a response...
+  ```python
+  {"function_call":{"name":"recommend_points","arguments":{"collection_name":"location_history","consistency":"eventual"}}}
+  ```
+- Now it's time to evaluate the performance of our fine-tuned model.
+   - **NOTE**: For the purpose of this example, we created a csv file made out of a subset of our dataset that we can use as a "test" dataset.
+     ```python
+     import pandas as pd
+       # URL of the CSV file
+       csv_url = "https://gist.githubusercontent.com/yebhub/0128b200be4711361179e16ae0e7dfc9/raw/762363cedce547bdb57ee4f3ab667dd525433267/data.csv"
+       
+       # Read the CSV file into a pandas DataFrame
+       df = pd.read_csv(csv_url)
+       
+       # Display the first few rows of the DataFrame to understand its structure
+       print("Original DataFrame:")
+       print(df.head())
+       
+       # Specify the size of the training subset (e.g., 80% of the data)
+       subset_size = 0.1
+       
+       # Create the training subset
+       training_subset = df.sample(frac=subset_size, random_state=42)
+       
+       # Display the first few rows of the training subset
+       print("\nTraining Subset:")
+       print(training_subset.head())
+       
+       # Optional: Save the training subset to a new CSV file
+       training_subset.to_csv("training_subset.csv", index=False)
+       
+       print("\nTraining subset saved to 'training_subset.csv'")
+     ```
