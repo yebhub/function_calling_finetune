@@ -62,3 +62,79 @@
   
   print(f"CSV file created successfully at: {csv_file_path}")
   ```
+
+- Next we need to store the formatted dataset into a publicly accessible URL so that LLM Engine can read them.
+   - In this example, we've uploaded the CSV file into a publically available [Gist](https://gist.github.com/yebhub/0128b200be4711361179e16ae0e7dfc9#file-data-csv).
+      - (**NOTE**: make sure you have given your github access token permission to create gists from API calls)
+ 
+     ```python
+     import requests
+
+     # GitHub Gist API endpoint
+     api_url = 'https://api.github.com/gists'
+     
+     # Personal access token for authentication
+     access_token = 'YOUR_ACCESS_TOKEN'
+     
+     csv_file_path = 'prompt_response.csv'
+     
+     with open(csv_file_path, 'r', encoding='utf-8') as file:
+       csv_content = file.read()
+     
+     # Create Gist payload
+     payload = {
+       'description': 'CSV file uploaded via API',
+       'public': True,
+       'files': {
+           'data.csv': {
+               'content': csv_content
+           }
+       }
+     }
+     
+     # Create Gist using GitHub API
+     headers = {
+       'Authorization': f'token {access_token}',
+       'Accept': 'application/vnd.github.v3+json'
+     }
+     response = requests.post(api_url, headers=headers, json=payload)
+     
+     # Check if the Gist was successfully created
+     if response.status_code == 201:
+       gist_url = response.json()['html_url']
+       print(f"Gist created successfully: {gist_url}")
+     else:
+       print(f"Failed to create Gist. Status code: {response.status_code}, Message: {response.text}")
+     ```
+## IV Fine-tune
+
+- With our dataset saved on CSV file hosted on a public Gist, we can move on to fine-tuning.
+- Set Scale API Key (instructions [here](https://github.com/scaleapi/llm-engine#-quick-start))
+  ```python
+     import os
+     os.environ['SCALE_API_KEY'] = 'your_api_key'
+  ```
+- Fine tune Llama 2 with a _single API call_
+   - Note that while LLM Engine supports training and fine-tuning with a training and validation dataset, here we are only providing a training dataset. In this case, LLM Engine will randomly split 10% of the data into a validation dataset to prevent overfitting.
+     
+  ```python
+  train_url = "https://gist.githubusercontent.com/yebhub/0128b200be4711361179e16ae0e7dfc9/raw/762363cedce547bdb57ee4f3ab667dd525433267/data.csv"
+  
+  from llmengine import FineTune
+  response = FineTune.create(
+      model="llama-2-7b",
+      training_file=train_url,
+      hyperparameters={
+          'lr':2e-4,
+      },
+      suffix='function-call-llama'
+  )
+  run_id = response.id
+  ```
+
+  ## V inference and evaluation
+
+  - make sure model exists
+    ```python
+    ft_model = FineTune.get(run_id).fine_tuned_model
+    ```
