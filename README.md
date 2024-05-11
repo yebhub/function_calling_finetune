@@ -185,3 +185,31 @@
        
        print("\nTraining subset saved to 'training_subset.csv'")
      ```
+
+ - Use test data to evaluate the fine-tuned model...
+   ```python
+    import pandas as pd
+    
+    #Helper a function to get outputs for fine-tuned model with retries
+    def get_output(prompt: str, num_retry: int = 5):
+        for _ in range(num_retry):
+            try:
+                response = Completion.create(
+                    model=ft_model, 
+                    prompt=prompt, 
+                    max_new_tokens=1000, 
+                    temperature=0.01
+                  )
+                return response.output.text.strip()
+            except Exception as e:
+                print(e)
+            return ""
+    #Read the test data
+    test = pd.read_csv("training_subset.csv")
+    test["prediction"] = test["prompt"].apply(get_output)
+    print(f"Accuracy: {(test['response'] == test['prediction']).mean() * 100:.2f}%")
+   ```
+- This has established a [place_holder] % accuracy, which is pretty strong! To determine how much fine-tuning has improved the model, compare this result to the original base llama-2 model.
+  
+## Conclusion
+- Fine-tuning LLMs for function calling is a powerful way to unlock their maximum potential and expand their capabilities. With this guide, we've shown you how you can fully realize Llama 2's JSON function calling performance capabilties to create dynamic AI-generated responses that can be used to interact with APIS and other external tools. From getting weather reports to getting real-time stock market updates, with models fine-tuned for JSON function calling, the possibilities are endless! 
