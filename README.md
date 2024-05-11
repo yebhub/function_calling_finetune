@@ -170,7 +170,7 @@
        print("Original DataFrame:")
        print(df.head())
        
-       # Specify the size of the training subset (e.g., 80% of the data)
+       # Specify the size of the training subset (e.g., 10% of the data)
        subset_size = 0.1
        
        # Create the training subset
